@@ -9,12 +9,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/c2h5oh/datasize"
 	"github.com/pkg/errors"
 )
 
+// explanation: https://man7.org/linux/man-pages/man5/proc.5.html
 type memoryReport struct {
-	vmRss   uint64
-	vmStack uint64
+	vmRSS uint64
+	vmStk uint64
 }
 
 func getMemoryReportOwn() (*memoryReport, error) {
@@ -29,7 +31,7 @@ func getMemoryReportOwn() (*memoryReport, error) {
 }
 
 func getMemoryReportByPID(pid int) (*memoryReport, error) {
-	path := fmt.Sprintf("/proc/%d/stat", pid)
+	path := fmt.Sprintf("/proc/%d/status", pid)
 
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -38,7 +40,39 @@ func getMemoryReportByPID(pid int) (*memoryReport, error) {
 
 	split := strings.Split(string(data), "\n")
 
-	fmt.Println(split)
+	out := &memoryReport{}
 
-	return nil, nil
+	for _, line := range split {
+		if strings.HasPrefix(line, "VmRSS") {
+			out.vmRSS, err = extractValue(line)
+
+			if err != nil {
+				return nil, errors.Wrap(err, "extract value")
+			}
+		}
+
+		if strings.HasPrefix(line, "VmStk") {
+			out.vmStk, err = extractValue(line)
+
+			if err != nil {
+				return nil, errors.Wrap(err, "extract value")
+			}
+		}
+	}
+
+	return out, nil
+}
+
+func extractValue(line string) (uint64, error) {
+	split := strings.Split(line, ":")
+	src := strings.TrimLeft(split[1], " \t")
+
+	var dst datasize.ByteSize
+
+	err := dst.UnmarshalText([]byte(src))
+	if err != nil {
+		return 0, errors.Wrapf(err, "unmarshal text '%s'", src)
+	}
+
+	return dst.Bytes(), nil
 }

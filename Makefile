@@ -5,6 +5,7 @@ image:
 	docker build . -t stackoverflow-go
 
 run:
-	docker run --rm -it --name stackoverflow-go --memory=512m --memory-swappiness=0 stackoverflow-go
+	docker run --rm -it -v /tmp/stackoverflow-go:/tmp/stackoverflow-go \
+ 		--name stackoverflow-go --memory=512m --memory-swappiness=0 stackoverflow-go
 
-investigation: build image run
+investigation: image run

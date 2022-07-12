@@ -1,9 +1,11 @@
-FROM fedora:latest
+FROM golang:1.17
 
-ADD stackoverflow-go /usr/local/bin
+WORKDIR /usr/src/stackoverflow-go
 
-WORKDIR /usr/local/bin
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
 
-RUN ls -l .
+COPY . .
+RUN go test -v -c . -o /usr/local/bin/stackoverflow-go
 
-CMD ["./stackoverflow-go"]
+CMD ["stackoverflow-go"]
