@@ -14,7 +14,7 @@ def bytes_major_formatter(x, pos):
 
 
 def render(df: pandas.DataFrame, out: os.PathLike, max_power_of_two: int, max_step: int):
-    plot = df.plot(x="Step", y=["VmRSS", "VmStk"])
+    plot = df.plot(x="Step", y=["VmRSS", "VmStk"], colormap='RdYlBu')
 
     plot.set_ylabel('Memory')
     plot.set_yscale("log")
