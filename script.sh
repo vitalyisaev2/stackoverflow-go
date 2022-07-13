@@ -4,3 +4,4 @@
 
 ./stackoverflow-go -test.run=StackOverflowGo
 ./stackoverflow-go -test.run=StackOverflowCgo
+./render.py
