@@ -4,10 +4,12 @@
 package stackoverflow_go
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/c2h5oh/datasize"
 	"github.com/pkg/errors"
@@ -75,4 +77,66 @@ func extractValue(line string) (uint64, error) {
 	}
 
 	return dst.Bytes(), nil
+}
+
+func trackStats(name string) error {
+	const perm = 0600
+
+	filename := fmt.Sprintf("/tmp/stackoverflow-go/%s.csv", name)
+
+	fd, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY|os.O_SYNC|os.O_TRUNC, perm)
+	if err != nil {
+		return errors.Wrap(err, "open file")
+	}
+
+	wr := csv.NewWriter(fd)
+
+	defer func() {
+		errClose := fd.Close()
+		if errClose != nil {
+			fmt.Println(errClose)
+		}
+	}()
+
+	err = wr.Write([]string{"Step", "VmRSS", "VmStk"})
+	if err != nil {
+		return errors.Wrap(err, "write header")
+	}
+
+	wr.Flush()
+
+	if wr.Error() != nil {
+		return errors.Wrap(wr.Error(), "flush")
+	}
+
+	step := 0
+
+	// ask Linux' procfs for stats and dump it to file
+	ticker := time.NewTicker(10 * time.Microsecond)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		report, err := getMemoryReportOwn()
+		if err != nil {
+			return errors.Wrap(err, "get memory report own")
+		}
+
+		err = wr.Write([]string{
+			fmt.Sprint(step),
+			fmt.Sprint(report.vmRSS),
+			fmt.Sprint(report.vmStk),
+		})
+		if err != nil {
+			return errors.Wrap(err, "write row")
+		}
+
+		wr.Flush()
+		if wr.Error() != nil {
+			return errors.Wrap(wr.Error(), "flush")
+		}
+
+		step++
+	}
+
+	return nil
 }

@@ -6,6 +6,6 @@ image:
 
 run:
 	docker run --rm -it -v /tmp/stackoverflow-go:/tmp/stackoverflow-go \
- 		--name stackoverflow-go --memory=512m --memory-swappiness=0 stackoverflow-go
+ 		--name stackoverflow-go --memory=256m --memory-swappiness=0 stackoverflow-go
 
 investigation: image run

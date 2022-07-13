@@ -1,4 +1,6 @@
-FROM golang:1.17
+FROM fedora:latest
+
+RUN dnf install -y golang
 
 WORKDIR /usr/src/stackoverflow-go
 
@@ -8,4 +10,4 @@ RUN go mod download && go mod verify
 COPY . .
 RUN go test -v -c . -o /usr/local/bin/stackoverflow-go
 
-CMD ["stackoverflow-go"]
+CMD ["./script.sh"]
